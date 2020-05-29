@@ -1,0 +1,361 @@
+---
+params:
+  researcher_ids: ""
+  examination_years : ""
+  user_mailaddress : ""
+  researcher_name : ""
+output:
+  pdf_document:
+    latex_engine: lualatex
+    template: snsf.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r preparations, include=FALSE}
+
+# Extract parameters into variable for convenience
+researcher_ids <- params$researcher_ids
+examination_years <- params$examination_years
+user_mailaddress <- params$user_mailaddress
+researcher_name <- params$researcher_name
+
+include_publications <- TRUE
+ 
+if (researcher_ids == "")
+  stop("No researcher ID(s) provided!")
+
+# Package preparations
+library(tidyverse)
+library(here)
+library(roadoi)
+library(readxl)
+library(magrittr)
+library(httr)
+library(jsonlite)
+library(kableExtra)
+library(lubridate)
+library(scales)
+library(lintr)
+library(conflicted)
+library(showtext)
+
+# Package conflict preferences
+conflict_prefer("here", "here")
+conflict_prefer("filter", "dplyr")
+conflict_prefer("extract", "magrittr")
+
+# Load dependent functions
+source(here("core", "dimensions_functions.R"))
+source(here("core", "oa_detection.R"))
+source(here("core", "report_generation_functions.R"))
+
+# Set locale to display today's month in English (supports all OS)
+Sys.setlocale("LC_TIME", "C")
+```
+
+
+```{r load_articles, include=FALSE}
+# Get articles since 2015 of the chosen researcher from Dimensions
+publications <- get_researcher_publications(researcher_ids, examination_years)
+
+# Subset articles
+articles <- publications %>%  
+  filter(type == "article")
+
+# Number of NA DOIs
+nrow(articles %>% filter(is.na(doi)))
+
+# Set the variable for the title of the document (set in the end)
+document_title <- paste0("Open Access Check: ", researcher_name)
+
+# Show message if no articles were found for researcher
+exit_message <- ""
+if (nrow(articles) == 0) {
+  exit_message <- 
+    paste0("No scientific articles were found for researcher ", researcher_name,
+           " for the selected years ", get_year_list_string(examination_years), 
+           " in Dimensions. Since there are still issues with", 
+           " the reliability of automated analyses of publication formats", 
+           " other than articles, these formats could not be included.")
+}
+
+```
+
+`r if (nrow(articles) == 0) { "
+---
+title: No articles found
+---
+" }`
+
+`r if (nrow(articles) == 0) { exit_message }`
+
+`r if (nrow(articles) == 0) { knitr::knit_exit() }`
+
+```{r determine_oa_status, include=FALSE}
+
+# Call Unpaywall with article DOIs and classify the articles 
+# into the SNSF OA categories
+articles <- determine_oa_status(articles, user_mailaddress)
+
+# Remove duplicates
+articles <- articles %>% 
+  distinct(id, .keep_all = TRUE)
+
+# Classify the closed articles in classes depending on time passed since 
+# their publication
+articles <- classify_closed_articles(articles)
+
+# Get number of articles successfully queried to Unpaywall 
+number_successfull_unpaywall_calls <- articles %>% 
+  filter(unpaywall_status == "OK") %>% 
+  nrow()
+```
+
+
+
+```{r create_plot, include=FALSE}
+# Sum up the OA classes
+oa_totals <- calculate_oa_totals(articles)
+
+# Calculate number of articles
+total_n <- sum(oa_totals$n, na.rm = TRUE)
+
+# Create plot
+p_oa_colors <- generate_oa_plot(oa_totals, researcher_name)
+
+# Create caption for code chunk
+caption <-
+  paste0("SNSF OA categories, ", prettyNum(total_n, big.mark = "'"), 
+    " articles by ", researcher_name, ", number of articles in brackets")
+
+# Percentage of OA (SNSF definition and broad definition) publications
+articles <- articles %>% 
+  # Only SNSF statuses gold green hybrid are seen as SNSF OA
+  mutate(is_oa_snsf = 
+           if_else(oa_status %in% c("gold", "green", "hybrid"), TRUE, FALSE))
+
+# Create some dynamic parts of the report text
+short_summary <- generate_short_summary(researcher_name, articles)
+```
+
+__\textcolor{red}{The SNSF Open Access Check is a prototype and reports like this one can still contain errors.}__
+
+`r short_summary`
+
+## Report of `r format(lubridate::now(), "%B %d, %Y")`
+
+For the year(s) `r get_year_list_string(examination_years)` we found **`r nrow(publications)`** publications in Dimensions[^1] for researcher `r researcher_name`, listing her/him as author, regardless of position in the author line.
+
+[^1]: https://app.dimensions.ai
+
+
+```{r publication_types, echo=FALSE}
+# Draw kable with publication types
+kable(publications %>%
+        count(type) %>%
+        arrange(type) %>%
+        mutate(type = paste(str_to_upper(str_sub(type, 1, 1)),
+                            str_sub(type, 2, nchar(type)),
+                            sep = "")) %>%
+        mutate(`Used in OA Check` = if_else(type == "Article", "Yes", 
+               "No")) %>% 
+        rename(`Publication Type (Dimensions)` = type), 
+      format = "latex") %>%
+  row_spec(0, bold = TRUE) %>%
+  kable_styling(position = "center")
+```
+
+__Only the `r nrow(publications %>% filter(type == "article"))` articles found in Dimensions are analysed.__ Lack of coverage of other publication formats does not allow for a useful analysis beyond articles.
+
+`r number_successfull_unpaywall_calls` (`r round((number_successfull_unpaywall_calls / nrow(articles)) * 100, 1)`%) of these articles have DOIs available and could be queried successfully to Unpaywall[^2] in order to obtain OA metadata. Articles are then classified into OA categories according to SNSF's open access definitions. For details please refer to the last sections of this report. 
+
+[^2]: https://unpaywall.org
+
+```{r plot_oa, echo=FALSE, fig.cap=caption, fig.width=6.5, fig.height=3.6, fig.align='center', fig.showtext=TRUE}
+
+# Add SNSF Font
+font_add(family = "Source Sans Pro", 
+         regular = here("report", "font", "SourceSansPro-Regular.ttf"))
+
+# Activate showtext
+showtext_auto()
+
+p_oa_colors
+```
+
+`r if(include_publications){"\\newpage"}`
+
+`r if(include_publications){"# Appendix"}`
+
+`r if(include_publications & nrow(filter(articles, oa_status == "closed")) > 0){"## Closed articles  "}`
+
+```{r appendix_closed, echo=FALSE, results='asis'}
+# Print the table with the articles used in the calculation for the OA shares
+if (include_publications) {
+   
+  # Bring data to correct format for displaying it in table
+  table_data <- articles %>%
+    # When Dimensions does not have the journal name of this article, fall 
+    # back to Unpaywall journal title (from Crossref) when available
+    mutate(journal_name = ifelse(is.na(journal_name) & !is.na(journal$title), 
+                                 journal$title, journal_name)) %>% 
+    select(title.x, doi, closed_oa_class, journal_name, date, oa_status,
+           months_since_pub, version, journal_is_oa, host_type, is_oa) %>%
+    mutate(date = if_else(oa_status == "closed",
+                          # Dimensions dates could also be not full dates
+                          if_else(nchar(date) == 10,
+                                  # Only calculate days since publication,
+                                  # when it is a full date
+                                 paste0(date, " (", closed_oa_class, 
+                                         " months)"),
+                                  date), # No exact pub date from Dimensions
+                          date),
+           title.x = paste0(title.x, " (", doi, ")")) %>% 
+    # Change order: First the closed, then the normal order
+    mutate(oa_status = factor(
+      articles$oa_status,
+      c("closed", "gold", "green", "hybrid", "other OA")
+    )) %>%
+    # Order by the age of the article
+    arrange(months_since_pub) %>%
+    # Remove some variables not needed to be displayed separately
+    select(-doi, -months_since_pub) %>%
+    rename(Title = title.x,
+           Journal = journal_name,
+           `Publication date` = date,
+           `SNSF OA Status` = oa_status) 
+
+  # If there are closed articles, show them in first table
+  if (nrow(filter(articles, oa_status == "closed")) > 0) {
+    # Subset the closed articles
+    table_subset <- table_data %>%
+                   filter(`SNSF OA Status` == "closed")
+    
+    for (idx in 1:length(levels(table_subset$closed_oa_class))) {
+      # Get the closed class
+      closed_class <- levels(table_subset$closed_oa_class)[idx]
+      
+      # When it actually is a closed class with data subset and show articles
+      if (!(closed_class %in% c("open", "undefined")) &
+          nrow(filter(table_subset, closed_oa_class == closed_class)) > 0) {
+        
+        # Draw kable with subsetted articles
+        kab <- kable(table_subset %>%
+                       # Subset this closed class
+                       filter(closed_oa_class == closed_class) %>%  
+                       select(-is_oa, -closed_oa_class, -version, 
+                              -journal_is_oa, -host_type), 
+                     format = "latex", longtable = TRUE) %>%
+          column_spec(1, "7cm") %>%
+          column_spec(2, "3.5cm") %>%
+          column_spec(3, "2cm") %>%
+          column_spec(4, "1.5cm") %>%
+          row_spec(0, bold = TRUE) %>%
+          kable_styling(latex_options = c("hold_position", "repeat_header"))
+        
+        # Cosmetic changes
+        closed_class_print <-
+          case_when(closed_class == "<= 6" ~ "$\\le$ 6",
+                    closed_class == "> 24" ~ "$>$ 24",
+                    TRUE ~ closed_class)
+        
+        # Print closed class as title and show kable (and do not break)
+        cat(paste0("### Time since publication: ", closed_class_print,
+                   " months "))
+        cat(kab)
+      }
+    }
+  }
+}
+```
+
+`r if(include_publications & nrow(filter(articles, oa_status == "other OA")) > 0){"## Other OA articles  "}`
+
+`r if(include_publications & nrow(filter(articles, oa_status == "other OA")) > 0){"*SNSF requires articles to be at least available as published versions or author's accepted manuscripts (including revisions after peer review, excluding publisher's layout). If the data obtained from Unpaywall does not allow to determine if an article fulfills this criterion, the article is considered \"other OA\".*\\newline"}`
+
+```{r appendix_other_oa, echo=FALSE}
+# Print the table with the articles used in the calculation for the OA shares
+if (include_publications) {
+  # If there are other OA articles, show them here
+  if (nrow(filter(articles, oa_status == "other OA")) > 0) {
+    # Subset the other OA articles
+    table_subset <- table_data %>%
+      filter(`SNSF OA Status` == "other OA") %>%
+      # Create new variable with the reason for the article being other OA 
+      mutate(reason = if_else(is_oa == TRUE & # Clarity purposes, anyway T
+                                host_type == "repository" & 
+                                version == "NULL", 
+                              "In repository, but no version description found", 
+                              "")) %>% 
+      mutate(reason = if_else(reason == "", 
+                              if_else(is_oa == TRUE & # For clarity, always TRUE
+                                        host_type == "repository" & 
+                                        !(version %in% c("publishedVersion",
+                                                         "acceptedVersion", 
+                                                         "updatedVersion"
+                                        )), "possibly preprint version", ""), 
+                              reason)) %>%
+      mutate(reason = if_else(reason == "", "Unknown reason", reason)) %>%
+      # Add the reason to the OA state
+      mutate(`SNSF OA Status` = paste0(`SNSF OA Status`, " (", reason, ")")) %>% 
+      select(-is_oa, -closed_oa_class, -version, -journal_is_oa, -host_type, 
+             -reason)
+    
+    
+    # Draw kable with subsetted articles
+    kable(table_subset, format = "latex", longtable = TRUE) %>%
+      # Adjust longtable options
+      kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
+      column_spec(1, "6cm") %>%
+      column_spec(2, "3cm") %>%
+      column_spec(3, "2cm") %>%
+      column_spec(4, "3cm") %>%
+      row_spec(0, bold = TRUE)
+  }
+}
+
+```
+
+`r if(include_publications & nrow(filter(articles, is_oa_snsf == T)) > 0){"## Open articles (according to SNSF definitions)  "}`
+
+```{r appendix_open, echo=FALSE}
+# Print the table with the articles used in the calculation for the OA shares
+if (include_publications) {
+  # If there are closed articles, show them in first table
+  if (nrow(filter(articles, is_oa_snsf == TRUE)) > 0) {
+    # Subset the closed articles
+    table_subset <- table_data %>%
+      filter(`SNSF OA Status` %in% c("gold", "green", "hybrid")) %>%
+        select(-is_oa, -closed_oa_class, -version, -journal_is_oa, 
+                          -host_type)
+
+    # Draw kable with subsetted articles
+    kable(table_subset, format = "latex", longtable = TRUE) %>%
+      # Adjust longtable options
+      kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
+      column_spec(1, "7cm") %>%
+      column_spec(2, "3.5cm") %>%
+      column_spec(3, "2cm") %>%
+      column_spec(4, "1.5cm") %>%
+      row_spec(0, bold = TRUE)
+  }
+}
+```
+
+\newpage
+
+```{r methods, child = here("text", "methods.md")}
+```
+
+```{r limitations, child = here("text", "limitations.md")}
+```
+
+```{r howto, child = here("text", "howto.md")}
+```
+
+---
+title: "`r document_title`"
+---

@@ -1,0 +1,48 @@
+# .gitignore Template for Data Team projects on Bitbucket
+# -------------------------------------------------------
+
+# The following list of files should be ignored when interacting with Bitbucket.
+# The are mostly related to R, RStudio and Rprojects.
+
+# First some pretty obvious files that are produced by R and RStudio:
+# History files
+.Rhistory
+.Rapp.history
+# Session Data files
+*.RData
+# User-specific files
+.Ruserdata
+# RStudio (project) files
+.Rproj.user/
+
+# Then you should NOT put the cache build by your markdowns on Bitbucket:
+# knitr and R markdown default cache directories
+*_cache/
+/cache/
+# Temporary files created by R markdown
+*.log
+*.aux
+*.out
+*.utf8.md
+*.knit.md
+
+# tex files are most often created by markdown documents, so no need to push (optional)
+*.tex
+*.pdf
+
+
+# R Environment Variables
+.Renviron
+
+# Optional stuff, depending on project (just uncomment, if needed):
+# *_files/	# these are the files created while rendering your markdowns.
+# figure-latex/
+# figure-html/
+rsconnect/ # if you are the only one deploying AND do not deploy from a common account DO NOT push
+
+# The gitignore itself can be ignored (optinal)
+# .gitignore
+
+# Then, you can add a directory or other files that you do NOT want to share on Bitbucket:
+# my-to-secret-documents/ 	 # a whole folder
+# the_secret_document.txt 	 # or separate files

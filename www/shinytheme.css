@@ -1,0 +1,70 @@
+/* SNSF Open Access Check CSS */
+
+body {
+  overflow-y: scroll;
+}
+
+h1, h2 {
+  font-weight: 500;
+}
+
+.clear {
+  clear: both;
+}
+
+.gray-text {
+  color: gray;
+}
+
+.gray-text-italic {
+  color: gray;
+  font-style: italic;
+}
+
+.red-text {
+  color: red;
+}
+
+.no-hover:link { 
+  text-decoration:none;
+}  
+
+.no-hover:hover { 
+  text-decoration:none;
+}  
+
+.full-width .shiny-input-container {
+  width: 100%;
+}
+
+.no-spacing {
+  padding: 0;
+  margin: 0;
+}
+
+.simple-spacing {
+  padding: 15px;
+}
+
+.plusminus-button {
+  width: 36px;
+  text-align: center;
+  margin-bottom: -1px;
+}
+
+.plusminus-open {
+  border-radius: 4px 4px 0 0;
+  border-bottom-color: #d9edf7;
+}
+
+.plusminus-closed {
+  border-radius: 4px;
+  border-bottom-color: #bce8f1;
+}
+
+.big-box {
+  border-radius: 0 4px 4px 4px;
+}
+
+
+
