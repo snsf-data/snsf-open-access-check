@@ -1,6 +1,6 @@
 # SNSF Open Access Check
 
-The application `Researcher Open Access Status` was developed by the SNSF with [R Shiny](https://shiny.rstudio.com/) as a prototype. Using data from Dimensions and Unpaywall, this prototype is limited for the time being to researchers based in Switzerland. It is available [here](http://www.snsf-oa-check.ch/). 
+The application `SNSF Open Access Check` was developed by the SNSF with [R Shiny](https://shiny.rstudio.com/) as a prototype. Using data from Dimensions and Unpaywall, this prototype is limited for the time being to researchers based in Switzerland. It is available [here](http://www.snsf-oa-check.ch/). 
 
 ## Local installation
 
