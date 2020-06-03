@@ -64,7 +64,7 @@ ui <- fluidPage(
         <p>
           The workflow is as follows:
           <ul>
-            <li>Dimensions is used to procure a list of articles to process (other publication formats are currently not considered, see <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a>)</li>
+            <li>Dimensions is used to procure a list of articles published from 2015 onwards to process (other publication formats are currently not considered, see <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a>)</li>
             <li>Unpaywall data is used to gather open access specific metadata of every article on the list</li>
             <li>Results are evaluated according to the SNSF’s definitions of open access</li>
             <li>A report is generated, providing an overview and a complete list of all articles and their individual open-access status</li>
@@ -117,7 +117,7 @@ ui <- fluidPage(
     tabsetPanel(type = "tabs",
                 id = "tabset", 
                 # Tab: The OA Status UI
-                tabPanel("OA Status", br(),
+                tabPanel("OA Check", br(),
                          tags$div(id = "researcher_textfield", 
                                   # Draw grid layout
                                   fluidRow(column(1,
