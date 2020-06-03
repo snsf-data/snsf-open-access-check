@@ -29,6 +29,9 @@ server <- function(input, output, session) {
   # Initialize async task queue to collect and run OA report generate/send jobs
   report_jobs <- task_q$new()
   
+  # Initialize async task queue to collect and run feedback send jobs
+  feedback_jobs <- task_q$new()
+  
   # Action when a researcher in the checkboxlist was chosen
   observeEvent(input$researcher_checkboxes, 
                # When clearing all CBs, the observe event should still fire
@@ -220,35 +223,78 @@ server <- function(input, output, session) {
     # Continue only when the provided inputs are correctly filled
     req(valid_mail, valid_feedback)
     
-    # Save the feedback to the logging database
-    if (logging) {
-      log_feedback(input$feedback_type, 
-                   input$feedback_text, 
-                   input$feedback_mail, 
-                   mailaddress_feedback)
-    }
-    
     # Send the feedback as mail to the feedback mail address
     
-    # Prepare and send mail message
-    blastula::compose_email(
-      body = blastula::md(paste0("## Hello! 
+    # Push the saving/sending of this feedback job to the async job queue
+    # Explicitly call every package for every function for remote R session
+    feedback_jobs$push(
+      function(feedback_mail,
+               feedback_type,   
+               feedback_text, 
+               mailaddress_noreply, 
+               mailaddress_feedback,
+               logging) {
+        
+        # Load the mailing functions
+        source(here::here("core", "logging.R"))
+        
+        # Save the feedback to the logging database
+        if (logging) {
+          log_feedback(feedback_type, 
+                       feedback_text, 
+                       feedback_mail, 
+                       mailaddress_feedback)
+        }
+        
+        # Try to send the feedback mail to the feedback mail address, log 
+        # error if sending did not work out
+        tryCatch({
+          # Send over SMTP
+          blastula::smtp_send(
+            # Create mail
+            blastula::compose_email(
+              body = blastula::md(paste0("## Hello! 
 A new feedback entry has been registered.  
   
-__From__: ", input$feedback_mail, "  
-__Type__: ", input$feedback_type, "  
+__From__: ", feedback_mail, "  
+__Type__: ", feedback_type, "  
 
-\"", input$feedback_text, "\"")),
-      footer = blastula::md("Swiss National Science Foundation")) %>% 
-      # Send over SMTP
-      blastula::smtp_send(
-        from = mailaddress_noreply,
-        to = mailaddress_feedback,
-        subject = paste0("New OA App Feedback (Type ", input$feedback_type, 
-                         ") from ", input$feedback_mail),
-        credentials = here("core", "mail_creds")
+\"", feedback_text, "\"")),
+              footer = blastula::md("Swiss National Science Foundation")), 
+            from = mailaddress_noreply,
+            to = mailaddress_feedback,
+            subject = paste0("New OA App Feedback (Type ", feedback_type, 
+                             ") from ", feedback_mail),
+            credentials = here::here("core", "mail_creds")
+          )
+        },
+        
+        # When there was an error while sending the mail, log it
+        error = function(e) {
+          if (logging) {
+            log_error(
+              error_type = "Sending Mail to feedback address",
+              error_message = as.character(e),
+              researcher_ids = "",
+              researcher_name = "",
+              examination_years = ""
+            )
+          }
+          return(NULL)
+        })
+      },
+      args = list(
+        feedback_mail = input$feedback_mail,
+        feedback_type = input$feedback_type,   
+        feedback_text = input$feedback_text, 
+        mailaddress_noreply = mailaddress_noreply,
+        mailaddress_feedback = mailaddress_feedback,
+        logging = logging
       )
+    )
     
+    # Launch the job in the queue
+    feedback_jobs$pop(timeout = 1)
     
     # Hide the feedback input controls
     hide("feedback_area")
@@ -381,7 +427,7 @@ For more information about OA visit the [SNSF OA website](https://oa100.snf.ch/)
                 credentials = cred_path
               )
             
-            # Log this succesful OA report mailing
+            # Log this successful OA report mailing
             if (logging) {
               log_mailing(
                 researcher_ids = parameters$researcher_ids,
