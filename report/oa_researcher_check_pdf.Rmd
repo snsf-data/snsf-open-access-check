@@ -76,7 +76,7 @@ exit_message <- ""
 if (nrow(articles) == 0) {
   exit_message <- 
     paste0("No scientific articles were found for researcher ", researcher_name,
-           " for the selected years ", get_year_list_string(examination_years), 
+           " for the examined years ", get_year_list_string(examination_years), 
            " in Dimensions. Since there are still issues with", 
            " the reliability of automated analyses of publication formats", 
            " other than articles, these formats could not be included.")
@@ -112,9 +112,29 @@ articles <- classify_closed_articles(articles)
 number_successfull_unpaywall_calls <- articles %>% 
   filter(unpaywall_status == "OK") %>% 
   nrow()
+
+# Show message if none of the found articles could be queried to Unpaywall
+exit_message_unpaywall <- ""
+if (number_successfull_unpaywall_calls == 0) {
+  exit_message_unpaywall <- 
+    paste0("None of the scientific articles found for ", researcher_name,
+           " in the examined years ", get_year_list_string(examination_years), 
+           " could be queried successfully to Dimensions. Concerned ", 
+           " articles: ", paste(articles$doi, collapse = ", "), ".")
+}
+
 ```
 
 
+`r if (number_successfull_unpaywall_calls == 0) { "
+---
+title: Article(s) could not be queried to Unpaywall
+---
+" }`
+
+`r if (number_successfull_unpaywall_calls == 0) { exit_message_unpaywall }`
+
+`r if (number_successfull_unpaywall_calls == 0) { knitr::knit_exit() }`
 
 ```{r create_plot, include=FALSE}
 # Sum up the OA classes

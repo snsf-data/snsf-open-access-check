@@ -37,75 +37,81 @@ determine_oa_status <- function(publications, unpaywall_email) {
   publications <- publications %>% 
     left_join(unpay_result, by = "doi")
   
-  # Extract some variables out of the Unpaywall result to classify publications
-  # into the SNSF OA typology
-  publications <- publications %>%
-    mutate(
-      # If it is OA, get host_type
-      host_type = ifelse(!is.na(is_oa) & is_oa,
+  # Only determine OA status when at least one article could be queried to 
+  # Unpaywall successfully
+  if ("is_oa" %in% names(publications)) {
+    
+    # Extract some variables out of the Unpaywall result to classify 
+    # publications into the SNSF OA typology
+    publications <- publications %>%
+      mutate(
+        # If it is OA, get host_type
+        host_type = ifelse(!is.na(is_oa) & is_oa,
+                           best_oa_location %>%
+                             # Extract host_type of the best OA location list
+                             map(function(x) {
+                               x %>%
+                                 extract2("host_type") 
+                             }),
+                           ""),
+        # If it is OA, get version
+        version = ifelse(!is.na(is_oa) & is_oa,
                          best_oa_location %>%
-                           # Extract host_type of the best OA location list
+                           # Extract version of the best OA location list
                            map(function(x) {
                              x %>%
-                               extract2("host_type") 
+                               extract2("version")
                            }),
-                         ""),
-      # If it is OA, get version
-      version = ifelse(!is.na(is_oa) & is_oa,
-                       best_oa_location %>%
-                         # Extract version of the best OA location list
-                         map(function(x) {
-                           x %>%
-                             extract2("version")
-                         }),
-                       "")
-    
-    ) %>%
-    # Convert these one entry lists to characters
-    mutate(
-      host_type = as.character(host_type),
-      version = as.character(version)
-    ) %>%
-    # Recode NA cases
-    mutate(
-      host_type = ifelse(host_type == "", NA, host_type),
-      version = ifelse(version == "", NA, version)
-    )
-  
-  # Classify the publications into the SNSF OA statuses
-  publications <- publications %>%
-    mutate(
-      is_oa = ifelse(is.na(is_oa), "unknown", is_oa),
-      oa_status = ifelse(is_oa == "unknown", "unknown", "known"),
-      oa_status = ifelse(is_oa == FALSE, "closed", oa_status),
-      oa_status = ifelse(is_oa == TRUE & host_type == "publisher" & 
-                           journal_is_oa == TRUE, "gold", oa_status),
-      oa_status = ifelse(is_oa == TRUE & host_type == "publisher" & 
-                           journal_is_oa == FALSE, "hybrid", oa_status),
-      oa_status = ifelse(is_oa == TRUE & host_type == "repository" & 
-                           version %in% c(
-                             "publishedVersion",
-                             "acceptedVersion",
-                             "updatedVersion" # Needed?
-                           ), "green", oa_status),
-      oa_status = ifelse(is_oa == TRUE & !(oa_status %in% c(
-        "gold",
-        "hybrid",
-        "green"
-      )), "other OA", oa_status)
-    )
-  
-  # Recoding special cases according to specific rules defined
-  publications <- publications %>%
-    mutate(
-      oa_status = ifelse(
-        (str_detect("book", type) | 
-           str_detect("monograph", type)) &  is_oa == TRUE & 
-          host_type == "publisher",
-        "gold",
-        oa_status
+                         "")
+        
+      ) %>%
+      # Convert these one entry lists to characters
+      mutate(
+        host_type = as.character(host_type),
+        version = as.character(version)
+      ) %>%
+      # Recode NA cases
+      mutate(
+        host_type = ifelse(host_type == "", NA, host_type),
+        version = ifelse(version == "", NA, version)
       )
-    )
+    
+    
+    # Classify the publications into the SNSF OA statuses
+    publications <- publications %>%
+      mutate(
+        is_oa = ifelse(is.na(is_oa), "unknown", is_oa),
+        oa_status = ifelse(is_oa == "unknown", "unknown", "known"),
+        oa_status = ifelse(is_oa == FALSE, "closed", oa_status),
+        oa_status = ifelse(is_oa == TRUE & host_type == "publisher" & 
+                             journal_is_oa == TRUE, "gold", oa_status),
+        oa_status = ifelse(is_oa == TRUE & host_type == "publisher" & 
+                             journal_is_oa == FALSE, "hybrid", oa_status),
+        oa_status = ifelse(is_oa == TRUE & host_type == "repository" & 
+                             version %in% c(
+                               "publishedVersion",
+                               "acceptedVersion",
+                               "updatedVersion" # Needed?
+                             ), "green", oa_status),
+        oa_status = ifelse(is_oa == TRUE & !(oa_status %in% c(
+          "gold",
+          "hybrid",
+          "green"
+        )), "other OA", oa_status)
+      )
+    
+    # Recoding special cases according to specific rules defined
+    publications <- publications %>%
+      mutate(
+        oa_status = ifelse(
+          (str_detect("book", type) | 
+             str_detect("monograph", type)) &  is_oa == TRUE & 
+            host_type == "publisher",
+          "gold",
+          oa_status
+        )
+      )
+  }
   
   return(publications)
 }

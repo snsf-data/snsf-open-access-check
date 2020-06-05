@@ -315,58 +315,65 @@ get_year_list_string <- function(years_to_examine) {
 # Function to classify the closed articles in classes depending on time passed 
 # since their publication
 classify_closed_articles <- function(articles) {
-  articles %>%
-    # Dimensions dates can also be not full dates (according to documentation)
-    mutate(months_since_pub = if_else(nchar(date) == 10, 
-                                      as_date(date), NULL)) %>%
-    # Calculate exact decimal value of the period between today and
-    # the date of the publication
-    # 1) If there is a pub date, calculate a lubridate interval
-    # 2) If there is a pub date, get the decimal number of months out of the
-    # lubridate period extracted from the lubridate interval
-    mutate(months_since_pub =
-             time_length(
-               as.period(
-                 interval(
-                   months_since_pub, today(tzone = "Europe/Zurich")
-                 )
-               ), unit = "months")) %>%
-    # Set the class for the closed OA articles to one of for levels
-    mutate(closed_oa_class =
-             if_else(oa_status == "closed",
-                     # Classify into 4 classes, according to time passed
-                     # since the article's publication
-                     case_when(
-                       months_since_pub <= 6 ~ "<= 6",
-                       (months_since_pub > 6 &
-                          months_since_pub <= 12) ~ "7 - 12",
-                       (months_since_pub > 12 &
-                          months_since_pub <= 24) ~ "13 - 24",
-                       months_since_pub > 24 ~ "> 24",
-                       TRUE ~ "> 24" # Instead of 'undefined'
-                     ),
-                     "open")) %>%
-    # Expand the closed OA categories with levels that might not in the data 
-    # of the selected researcher
-    mutate(
-      closed_oa_class = fct_expand(closed_oa_class,
-                                   c("open-gold", 
-                                     "open-green", 
-                                     "open-hybrid", 
-                                     "open-other OA", 
-                                     "<= 6", 
-                                     "7 - 12", 
-                                     "13 - 24", 
-                                     "> 24")), 
-      # Fix the order
-      closed_oa_class = fct_relevel(closed_oa_class,
-                                    c("open-gold", 
-                                      "open-green", 
-                                      "open-hybrid", 
-                                      "open-other OA", 
-                                      "<= 6", 
-                                      "7 - 12", 
-                                      "13 - 24", 
-                                      "> 24"))) %>% 
-    return()
+  
+  # Only classify closed status when at least one article could be queried to 
+  # Unpaywall successfully
+  if ("is_oa" %in% names(articles)) {
+    articles %>%
+      # Dimensions dates can also be not full dates (according to documentation)
+      mutate(months_since_pub = if_else(nchar(date) == 10, 
+                                        as_date(date), NULL)) %>%
+      # Calculate exact decimal value of the period between today and
+      # the date of the publication
+      # 1) If there is a pub date, calculate a lubridate interval
+      # 2) If there is a pub date, get the decimal number of months out of the
+      # lubridate period extracted from the lubridate interval
+      mutate(months_since_pub =
+               time_length(
+                 as.period(
+                   interval(
+                     months_since_pub, today(tzone = "Europe/Zurich")
+                   )
+                 ), unit = "months")) %>%
+      # Set the class for the closed OA articles to one of for levels
+      mutate(closed_oa_class =
+               if_else(oa_status == "closed",
+                       # Classify into 4 classes, according to time passed
+                       # since the article's publication
+                       case_when(
+                         months_since_pub <= 6 ~ "<= 6",
+                         (months_since_pub > 6 &
+                            months_since_pub <= 12) ~ "7 - 12",
+                         (months_since_pub > 12 &
+                            months_since_pub <= 24) ~ "13 - 24",
+                         months_since_pub > 24 ~ "> 24",
+                         TRUE ~ "> 24" # Instead of 'undefined'
+                       ),
+                       "open")) %>%
+      # Expand the closed OA categories with levels that might not in the data 
+      # of the selected researcher
+      mutate(
+        closed_oa_class = fct_expand(closed_oa_class,
+                                     c("open-gold", 
+                                       "open-green", 
+                                       "open-hybrid", 
+                                       "open-other OA", 
+                                       "<= 6", 
+                                       "7 - 12", 
+                                       "13 - 24", 
+                                       "> 24")), 
+        # Fix the order
+        closed_oa_class = fct_relevel(closed_oa_class,
+                                      c("open-gold", 
+                                        "open-green", 
+                                        "open-hybrid", 
+                                        "open-other OA", 
+                                        "<= 6", 
+                                        "7 - 12", 
+                                        "13 - 24", 
+                                        "> 24"))) %>%
+      return()
+  } else {
+    return(articles)
+  } 
 }
