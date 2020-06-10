@@ -119,7 +119,7 @@ if (number_successfull_unpaywall_calls == 0) {
   exit_message_unpaywall <- 
     paste0("None of the scientific articles found for ", researcher_name,
            " in the examined years ", get_year_list_string(examination_years), 
-           " could be queried successfully to Dimensions. Concerned ", 
+           " could be queried successfully to Unpaywall. Concerned ", 
            " articles: ", paste(articles$doi, collapse = ", "), ".")
 }
 
