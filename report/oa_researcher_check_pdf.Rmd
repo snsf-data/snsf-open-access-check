@@ -54,6 +54,9 @@ source(here("core", "report_generation_functions.R"))
 
 # Set locale to display today's month in English (supports all OS)
 Sys.setlocale("LC_TIME", "C")
+
+# Mail address only in lowercase for API queries
+user_mailaddress <- str_to_lower(user_mailaddress)
 ```
 
 
