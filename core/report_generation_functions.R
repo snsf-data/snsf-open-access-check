@@ -284,7 +284,7 @@ generate_short_summary <- function(researcher_name,
     round(percentage_is_oa_broad * 100),
     "%__ of ",
     researcher_name,
-    "'s analyzed articles are openly available. __", 
+    "'s analysed articles are openly available. __", 
     round(percentage_is_oa_snsf * 100), 
     "%__ are open access according to SNSF's definition, only taking gold,", 
     " green and hybrid articles into account.")
