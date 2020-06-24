@@ -62,7 +62,18 @@ determine_oa_status <- function(publications, unpaywall_email) {
                              x %>%
                                extract2("version")
                            }),
-                         "")
+                         ""), 
+        # If it is OA, get link to OA version
+        # Per default, this is the link to the PDF version, if not found, 
+        # fallback to the landing page (https://unpaywall.org/data-format)
+        pdf_link = ifelse(!is.na(is_oa) & is_oa,
+                          best_oa_location %>%
+                            # Extract url of the best OA location list
+                            map(function(x) {
+                              x %>%
+                                extract2("url")
+                            }),
+                          "")
         
       ) %>%
       # Convert these one entry lists to characters

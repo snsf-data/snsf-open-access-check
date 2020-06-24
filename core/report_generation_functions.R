@@ -377,3 +377,23 @@ classify_closed_articles <- function(articles) {
     return(articles)
   } 
 }
+
+# Function from package "tikzDevice" to escape Latex characters correctly 
+sanitize_tex_string <- function(string, strip = c("%", "$", "}", "{", "^,", "_",
+                                                "#,", "&", "~"), 
+                              replacement = c("\\%", "\\$", "\\}", "\\{", 
+                                              "\\^{}", "\\_{}", "\\#", "\\&", 
+                                              "\\char`\\~")) {
+  explode <- strsplit(string, "")[[1]]
+  if (any(is.na(explode))) 
+    stop(paste0("Unable to sanitize string, you may be trying to pass in an", 
+    " unsupported symbol"))
+  for (i in 1:length(explode)) {
+    matches <- (explode[i] == strip)
+    if (any(matches)) {
+      explode[i] <- paste("{", replacement[which(matches)], 
+                          "}", sep = "")
+    }
+  }
+  return(paste(explode, collapse = ""))
+}
