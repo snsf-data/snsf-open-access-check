@@ -226,7 +226,8 @@ if (include_publications) {
     mutate(journal_name = ifelse(is.na(journal_name) & !is.na(journal$title), 
                                  journal$title, journal_name)) %>% 
     select(title.x, doi, closed_oa_class, journal_name, date, oa_status,
-           months_since_pub, version, journal_is_oa, host_type, is_oa) %>%
+           months_since_pub, version, journal_is_oa, host_type, is_oa, 
+           pdf_link) %>%
     mutate(date = if_else(oa_status == "closed",
                           # Dimensions dates could also be not full dates
                           if_else(nchar(date) == 10,
@@ -249,8 +250,16 @@ if (include_publications) {
     rename(Title = title.x,
            Journal = journal_name,
            `Publication date` = date,
-           `SNSF OA Status` = oa_status) 
-
+           `SNSF OA Status` = oa_status) %>%  
+    # Escape special Latex characters, so the argument escape = FALSE can be 
+    # set for kable(), which is needed to allow links
+    mutate(Title = map_chr(Title, function(x) {
+      sanitize_tex_string(x)
+    }),
+    Journal = map_chr(Journal, function(x) {
+      sanitize_tex_string(x)
+    })) 
+  
   # If there are closed articles, show them in first table
   if (nrow(filter(articles, oa_status == "closed")) > 0) {
     # Subset the closed articles
@@ -270,8 +279,9 @@ if (include_publications) {
                        # Subset this closed class
                        filter(closed_oa_class == closed_class) %>%  
                        select(-is_oa, -closed_oa_class, -version, 
-                              -journal_is_oa, -host_type), 
+                              -journal_is_oa, -host_type, -pdf_link), 
                      format = "latex", longtable = TRUE) %>%
+
           column_spec(1, "7cm") %>%
           column_spec(2, "3.5cm") %>%
           column_spec(3, "2cm") %>%
@@ -313,23 +323,28 @@ if (include_publications) {
                                 version == "NULL", 
                               "In repository, but no version description found", 
                               "")) %>% 
-      mutate(reason = if_else(reason == "", 
-                              if_else(is_oa == TRUE & # For clarity, always TRUE
-                                        host_type == "repository" & 
-                                        !(version %in% c("publishedVersion",
-                                                         "acceptedVersion", 
-                                                         "updatedVersion"
-                                        )), "possibly preprint version", ""), 
-                              reason)) %>%
+      mutate(reason = 
+               if_else(reason == "", 
+                       if_else(is_oa == TRUE & # For clarity, always TRUE
+                                 host_type == "repository" & 
+                                 !(version %in% c("publishedVersion",
+                                                  "acceptedVersion", 
+                                                  "updatedVersion"
+                                 )), 
+                               paste0("not peer-reviewed, '", version,
+                                      "'"), 
+                               ""), 
+                       reason)) %>%
       mutate(reason = if_else(reason == "", "Unknown reason", reason)) %>%
-      # Add the reason to the OA state
-      mutate(`SNSF OA Status` = paste0(`SNSF OA Status`, " (", reason, ")")) %>% 
+      # Add the link to the found PDF location
+      mutate(`SNSF OA Status` = paste0("\\href{", pdf_link, "}{\\underline{",
+                                       `SNSF OA Status`,
+                                       "}}")) %>%
+      mutate(`SNSF OA Status` = paste0(`SNSF OA Status`, " (", reason, ")")) %>%
       select(-is_oa, -closed_oa_class, -version, -journal_is_oa, -host_type, 
-             -reason)
-    
-    
+             -reason, -pdf_link)
     # Draw kable with subsetted articles
-    kable(table_subset, format = "latex", longtable = TRUE) %>%
+    kable(table_subset, format = "latex", escape = FALSE, longtable = TRUE) %>%
       # Adjust longtable options
       kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
       column_spec(1, "6cm") %>%
@@ -352,11 +367,15 @@ if (include_publications) {
     # Subset the closed articles
     table_subset <- table_data %>%
       filter(`SNSF OA Status` %in% c("gold", "green", "hybrid")) %>%
-        select(-is_oa, -closed_oa_class, -version, -journal_is_oa, 
-                          -host_type)
-
+      # Add the link to the found PDF location
+      mutate(`SNSF OA Status` = paste0("\\href{", pdf_link, "}{\\underline{", 
+                                       `SNSF OA Status`, 
+                                       "}}")) %>%  
+      select(-is_oa, -closed_oa_class, -version, -journal_is_oa, 
+             -host_type, -pdf_link)
+      
     # Draw kable with subsetted articles
-    kable(table_subset, format = "latex", longtable = TRUE) %>%
+    kable(table_subset, format = "latex", escape = FALSE, longtable = TRUE) %>%
       # Adjust longtable options
       kable_styling(latex_options = c("hold_position", "repeat_header")) %>%
       column_spec(1, "7cm") %>%
