@@ -221,10 +221,12 @@ if (include_publications) {
    
   # Bring data to correct format for displaying it in table
   table_data <- articles %>%
-    # When Dimensions does not have the journal name of this article, fall 
-    # back to Unpaywall journal title (from Crossref) when available
-    mutate(journal_name = ifelse(is.na(journal_name) & !is.na(journal$title), 
-                                 journal$title, journal_name)) %>% 
+    # When Unpaywall does have the journal name, take it (bc. from Crossref), 
+    # otherwise, fallback to Dimensions journal name
+    mutate(journal_name = ifelse(!is.na(journal$title), journal$title,
+                                 journal_name)) %>% 
+    # mutate(journal_name = ifelse(is.na(journal_name) & !is.na(journal$title), 
+    #                              journal$title, journal_name)) %>% 
     select(title.x, doi, closed_oa_class, journal_name, date, oa_status,
            months_since_pub, version, journal_is_oa, host_type, is_oa, 
            pdf_link) %>%
@@ -254,11 +256,23 @@ if (include_publications) {
     # Escape special Latex characters, so the argument escape = FALSE can be 
     # set for kable(), which is needed to allow links
     mutate(Title = map_chr(Title, function(x) {
-      sanitize_tex_string(x)
+      knitr:::escape_latex(x)
+      # sanitize_tex_string(x)
     }),
     Journal = map_chr(Journal, function(x) {
-      sanitize_tex_string(x)
-    })) 
+      # First, escape any Latex symbols
+      # x <- sanitize_tex_string(x)
+      x <- knitr:::escape_latex(x)
+      
+      # Then, create a link to Sherpa/Romeo, search by journal name
+      paste0(
+        "\\href{https://v2.sherpa.ac.uk/cgi/romeosearch?",
+        "publication_title-auto=",
+        URLencode(x),
+        "&_action_search=Search&screen=Search&publication_title-auto_merge=",
+        "ALL}{", x, "}"
+      )
+    }))
   
   # If there are closed articles, show them in first table
   if (nrow(filter(articles, oa_status == "closed")) > 0) {
@@ -280,7 +294,7 @@ if (include_publications) {
                        filter(closed_oa_class == closed_class) %>%  
                        select(-is_oa, -closed_oa_class, -version, 
                               -journal_is_oa, -host_type, -pdf_link), 
-                     format = "latex", longtable = TRUE) %>%
+                     format = "latex", longtable = TRUE, escape = FALSE) %>%
 
           column_spec(1, "7cm") %>%
           column_spec(2, "3.5cm") %>%
