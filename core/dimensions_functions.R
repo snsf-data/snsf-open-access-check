@@ -155,17 +155,41 @@ get_swiss_researchers <- function(researcher_name) {
     paste0(
       "search researchers for ",
       "\"\\\"",
-      researcher_name,
+      str_trim(researcher_name),
       "\\\"\" where obsolete != 1 and total_publications > 0",
       # Add filter: Current or past research organization in Switzerland
-      " and research_orgs.country_name = \"Switzerland\"", 
-      "return researchers [all]"
-    ))
+      # " and research_orgs.country_name = \"Switzerland\"",
+      " return researchers [all]"
+    )
+  )
   
   if (length(researchers$researchers) > 0) {
-    return(as_tibble(researchers$researchers))
+    # Extract researchers as tibble
+    researchers <- as_tibble(researchers$researchers)
+    
+    # Remove entries with no connection to Switzerland (current or past)
+    # This has to be done here and not in the query, as Dimensions discourages
+    # the use of entity filters (like research_orgs.country_name), as they can 
+    # lead to incomplete results
+    researchers <- researchers %>% 
+      mutate(past_swiss = map_lgl(research_orgs, function(x) {
+        if (is.null(x))
+          return(FALSE)
+        x <- x %>% 
+          select(country_name) %>% 
+          pull()
+        if ("Switzerland" %in% x)
+          return(TRUE)
+        return(FALSE)
+      }), 
+      present_swiss = current_research_org$country_name == "Switzerland") %>%  
+      # Only keep the researchers with past or present CH research organization
+      filter(present_swiss | past_swiss)
+    
+    if (nrow(researchers) == 0)
+      return(tibble())
+    
+    return(researchers)
   }
-  
   return(tibble())
-  
 }
