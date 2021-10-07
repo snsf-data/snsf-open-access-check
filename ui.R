@@ -59,7 +59,7 @@ ui <- fluidPage(
           The aim of this tool is to support you in reflecting on your own publishing practices: what percentage of your scholarly articles is available in an open-access format? Under what conditions? Have those articles been published in an open-access or in a hybrid journal, are they available in a repository? Which currently closed articles could be legally made open access right now?
         </p>
         <p>
-          The tool was developed by the SNSF as a prototype. Using data from Dimensions and Unpaywall, this prototype amounts to a first step and is limited for the time being to researchers based in Switzerland. Our goal is to continue developing the tool in cooperation with Dimensions so that it can eventually become part of their openly available services.
+          The tool was developed by the SNSF as a prototype. Using data from Dimensions and Unpaywall, this prototype amounts to a first step. Our goal is to continue developing the tool in cooperation with Dimensions so that it can eventually become part of their openly available services.
         </p>
         <p>
           The workflow is as follows:
@@ -74,7 +74,6 @@ ui <- fluidPage(
           <strong>Please bear in mind that the reports may contain errors or suffer from missing data. Have a look at the <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a> of the tool and consider providing <a href='", paste0(host_location_url, "?page=feedback"), "'>feedback</a>.</strong>
         </p>
         <p>
-          SNSF Open Access Check is only available for researchers at a Swiss research institution.<br/>
           This is an open source tool published under the <a href='https://opensource.org/licenses/MIT' target='_blank'>MIT license</a>, click <a href='https://github.com/snsf-data/snsf-open-access-check' target='_blank'>here</a> to visit the Github page.
         </p>
       </div>
@@ -91,7 +90,6 @@ ui <- fluidPage(
           <strong>Please bear in mind that the reports may contain errors or suffer from missing data. Have a look at the <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a> of the tool and consider providing <a href='", paste0(host_location_url, "?page=feedback"), "'>feedback</a>.</strong>
       </p>
       <p>
-        SNSF Open Access Check is only available for researchers at a Swiss research institution.<br/>
         This is an open source tool published under the <a href='https://opensource.org/licenses/MIT' target='_blank'>MIT license</a>, click <a href='https://github.com/snsf-data/snsf-open-access-check' target='_blank'>here</a> to visit the Github page.
       </p>
     </div>"), 
@@ -124,12 +122,12 @@ ui <- fluidPage(
                                                   h1("1.")), 
                                            column(
                                              11,
-                                             textInput("researcher_name", label = "Enter researcher name (must be affiliated with a Swiss research institution):", value = ""), 
+                                             textInput("researcher_name", label = "Enter researcher name:", value = ""), 
                                              actionButton("search_researcher", label = "Search researcher", icon = icon("search")), br(), br(), 
                                              hidden(
                                                tags$div(
                                                  id = "researcher_notfound", 
-                                                 HTML("<span class='red-text'>No researcher at a Swiss research institution found for the name entered.</span>"),
+                                                 HTML("<span class='red-text'>No researcher found with the name entered.</span>"),
                                                  br(), br()
                                                )
                                              )

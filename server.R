@@ -72,7 +72,7 @@ server <- function(input, output, session) {
     hide("report_requested")
     
     # Get all Swiss researchers with this name 
-    researchers <- get_swiss_researchers(input$researcher_name)
+    researchers <- get_researchers(input$researcher_name)
     
     # If researchers were found, display them
     if (nrow(researchers) > 0) {
@@ -140,9 +140,14 @@ server <- function(input, output, session) {
         ungroup()
       
       # Call Dimensions API to get publication count since 2015 for researchers
-      researchers_distinct <- researchers_distinct %>%  
-        mutate(pub_since_2015 = map_dbl(ids, function(x) 
-          get_number_publications(x, 2015)))
+      researchers_distinct <- researchers_distinct %>%
+        mutate(pub_since_2015 = map_dbl(ids, function(x) {
+          # If there are many researchers with this name, slow down the 
+          # Dimensions API calls to prevent 429 - too many requests error
+          if (nrow(researchers_distinct) > 15)
+            Sys.sleep(0.75)
+          get_number_publications(x, 2015)
+        }))
       
       
       # Create the named vector for the Shiny input
