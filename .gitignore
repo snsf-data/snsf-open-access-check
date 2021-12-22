@@ -38,7 +38,7 @@
 # *_files/	# these are the files created while rendering your markdowns.
 # figure-latex/
 # figure-html/
-rsconnect/ # if you are the only one deploying AND do not deploy from a common account DO NOT push
+# rsconnect/ # if you are the only one deploying AND do not deploy from a common account DO NOT push
 
 # The gitignore itself can be ignored (optinal)
 # .gitignore

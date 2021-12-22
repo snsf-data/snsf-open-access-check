@@ -47,39 +47,8 @@ ui <- fluidPage(
     
     # Info text in Bootstrap style
     HTML("
-    <button class='btn alert-info plusminus-button plusminus-open' type='button' data-toggle='collapse' data-target='.multi-collapse'>-</button>
-    <div class='alert alert-info collapse in multi-collapse no-spacing big-box'>
+     <div class='alert alert-info no-spacing big-box'>
       <div class='simple-spacing'>
-        <h3 class='media-heading'>Welcome!</h3>
-        <br/>
-        <p>
-          There is no shortage of explanations, definitions, regulations and guidelines on the topic of open access. For researchers and authors,  finding out how open access works in their field can be a challenge. So can learning how to comply with the rules set by a research funder, such as the SNSF.
-        </p>
-        <p>
-          The aim of this tool is to support you in reflecting on your own publishing practices: what percentage of your scholarly articles is available in an open-access format? Under what conditions? Have those articles been published in an open-access or in a hybrid journal, are they available in a repository? Which currently closed articles could be legally made open access right now?
-        </p>
-        <p>
-          The tool was developed by the SNSF as a prototype. Using data from Dimensions and Unpaywall, this prototype amounts to a first step. Our goal is to continue developing the tool in cooperation with Dimensions so that it can eventually become part of their openly available services.
-        </p>
-        <p>
-          The workflow is as follows:
-          <ul>
-            <li>Dimensions is used to procure a list of articles published from 2015 onwards to process (other publication formats are currently not considered, see <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a>)</li>
-            <li>Unpaywall data is used to gather open access specific metadata of every article on the list</li>
-            <li>Results are evaluated according to the SNSF’s definitions of open access</li>
-            <li>A report is generated, providing an overview and a complete list of all articles and their individual open-access status</li>
-          </ul>
-        </p>
-        <p>
-          <strong>Please bear in mind that the reports may contain errors or suffer from missing data. Have a look at the <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a> of the tool and consider providing <a href='", paste0(host_location_url, "?page=feedback"), "'>feedback</a>.</strong>
-        </p>
-        <p>
-          This is an open source tool published under the <a href='https://opensource.org/licenses/MIT' target='_blank'>MIT license</a>, click <a href='https://github.com/snsf-data/snsf-open-access-check' target='_blank'>here</a> to visit the Github page.
-        </p>
-      </div>
-    </div>
-    <div class='gray-text collapse multi-collapse no-spacing'>
-      <br/>
       <p>
         There is no shortage of explanations, definitions, regulations and guidelines on the topic of open access. For researchers and authors,  finding out how open access works in their field can be a challenge. So can learning how to comply with the rules set by a research funder, such as the SNSF.
       </p>
@@ -90,8 +59,9 @@ ui <- fluidPage(
           <strong>Please bear in mind that the reports may contain errors or suffer from missing data. Have a look at the <a href='", paste0(host_location_url, "?page=limitations"), "'>limitations</a> of the tool and consider providing <a href='", paste0(host_location_url, "?page=feedback"), "'>feedback</a>.</strong>
       </p>
       <p>
-        This is an open source tool published under the <a href='https://opensource.org/licenses/MIT' target='_blank'>MIT license</a>, click <a href='https://github.com/snsf-data/snsf-open-access-check' target='_blank'>here</a> to visit the Github page.
+        This is an open source tool published under the <a href='https://opensource.org/licenses/MIT' target='_blank'>MIT license</a>, click <a href='https://github.com/snsf-data/snsf-open-access-check' target='_blank'>here to visit the Github page</a>.
       </p>
+      </div>
     </div>"), 
     
     br(), 

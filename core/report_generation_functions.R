@@ -11,8 +11,9 @@ barplot_theme <- theme(
   plot.title = element_text(size = 14),
   panel.grid.major.x = element_blank(),
   panel.grid.major.y = element_line(
-    color = "#D3D3D3",
-    size = 0.3,
+    color = "#AFAFAF",
+    # color = "#D3D3D3",
+    size = 0.2,
     linetype = "longdash"
   ),
   panel.background = element_blank(),
@@ -21,8 +22,8 @@ barplot_theme <- theme(
   axis.text.x = element_text(size = 8),
   axis.text.y = element_text(size = 8),
   axis.ticks.x = element_blank(),
-  axis.ticks.y = element_blank() 
-  
+  axis.ticks.y = element_blank()
+
 )
 
 # Function to sum up the OA status classes and to prepare the data 
@@ -174,7 +175,7 @@ generate_oa_plot <- function(oa_totals, researcher_name) {
     geom_text(aes(y = tot_freq + (max_y / 15),
                   # Only display for the first bar of each OA status
                   label = if_else(first_per_status,
-                                  paste0(round(tot_freq * 100, 1), "% (",
+                                  paste0(round(tot_freq * 100), "% (",
                                          prettyNum(tot_n, big.mark = "'"),
                                          ")"), "")),
               color = "#4d4d4d", size = 3, family = "Source Sans Pro") +
@@ -184,7 +185,7 @@ generate_oa_plot <- function(oa_totals, researcher_name) {
                   # frequency lies above 1.5% (size)
                   label = if_else(oa_status != "closed" |
                                     freq <= 0.015, "",
-                                  paste0(round(freq * 100, 1), "% (",
+                                  paste0(round(freq * 100), "% (",
                                          prettyNum(n, big.mark = "'"),
                                          ")"))),
               color = "white", position = position_stack(vjust = 0.5),

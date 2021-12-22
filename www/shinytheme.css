@@ -43,7 +43,7 @@ h1, h2 {
 }
 
 .simple-spacing {
-  padding: 15px;
+  padding: 20px 15px 15px 15px;
 }
 
 .plusminus-button {
@@ -63,7 +63,7 @@ h1, h2 {
 }
 
 .big-box {
-  border-radius: 0 4px 4px 4px;
+  border-radius: 4px;
 }
 
 

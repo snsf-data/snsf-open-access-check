@@ -1,5 +1,14 @@
 ## Data and Methods
 
+This tool was developed by the SNSF as a prototype. It is a first step towards the goal of Dimensions offering OA reports as part of their free and openly available services.
+The workflow is as follows:
+
+*	Dimensions is used to procure a list of articles published from 2015 onwards  (other publication formats are currently not considered, see limitations)
+*	Unpaywall data is used to gather open access specific metadata of every article on the list
+* Results are evaluated according to the SNSF’s definitions of open access
+*	A report is generated, providing an overview and a complete list of all articles and their individual open-access status
+
+
 __Data__
 
 The following data sources are used:
