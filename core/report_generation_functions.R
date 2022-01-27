@@ -239,7 +239,7 @@ generate_oa_plot <- function(oa_totals, researcher_name) {
     ) +
     scale_color_manual(values = c("white" = "white",
                                   "transparent" = NA),
-                       guide = FALSE) +
+                       guide = "none") +
     labs(x = NULL, y = NULL) +
     barplot_theme
   

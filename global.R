@@ -2,6 +2,7 @@
 # package initialization, sourcing of R script components
 
 # Load/install required packages
+library(markdown) # Fix RSConnect bug needing this package
 library(shiny) # Shiny framework
 library(tidyverse) # What else?
 library(here) # Directory path management
@@ -40,7 +41,7 @@ mailaddress_noreply <- "no-reply@snsf-oa-check.ch"
 mailaddress_feedback <- "contact@snsf-oa-check.ch"
 
 # Whether errors and generated reports should be logged 
-logging <- FALSE
+logging <- TRUE
 
 # Regex to validate mail addresses
 mail_regex <- "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"

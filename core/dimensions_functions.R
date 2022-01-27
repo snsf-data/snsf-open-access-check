@@ -48,9 +48,7 @@ query_dimensions <- function(query) {
   # Throw error message when the request status code is not 'OK'
   if (dsl_req$status_code != 200) {
     # Convert hex error content to character
-    error_message <- rawToChar(dsl_req$content) %>%
-      # Extract error message in title tag
-      str_extract("(?<=<title>)[A-Za-z0-9 ]*(?=<\\/title>)") 
+    error_message <- rawToChar(dsl_req$content)
     
     # Throw error with the message
     stop(paste0("Dimensions API request failed: ", error_message))
@@ -137,7 +135,7 @@ get_researchers <- function(researcher_name) {
       "\\\"\" where obsolete != 1 and total_publications > 0",
       # Add filter: Current or past research organization in Switzerland
       # " and research_orgs.country_name = \"Switzerland\"",
-      " return researchers [all]"
+      " return researchers[last_name + first_name + total_publications + id]"
     )
   )
   
