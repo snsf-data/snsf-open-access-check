@@ -218,12 +218,13 @@ generate_oa_plot <- function(oa_totals, researcher_name) {
                  "> 24"),
       # Do not drop factor levels when there is no data
       drop = FALSE,
-      name = "Months since publication (closed)",
+      name = "Closed: Months since publication",
       # Legend items to display (when available)
       breaks = c("<= 6",
                  "7 - 12",
                  "13 - 24",
                  "> 24"),
+      limits = force, 
       # Legend style
       guide = guide_legend(
         title.position = "left",

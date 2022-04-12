@@ -135,7 +135,7 @@ get_researchers <- function(researcher_name) {
       "\\\"\" where obsolete != 1 and total_publications > 0",
       # Add filter: Current or past research organization in Switzerland
       # " and research_orgs.country_name = \"Switzerland\"",
-      " return researchers[last_name + first_name + total_publications + id]"
+      " return researchers[last_name + first_name + current_research_org + total_publications + id]"
     )
   )
   
